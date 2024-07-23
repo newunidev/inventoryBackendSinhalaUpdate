@@ -1,0 +1,174 @@
+// const { DataTypes } = require('sequelize');
+// const sequelize = require('../database'); // Import the Sequelize instance
+// const Product = require('./Product.js'); // Import the Product model
+
+// const TransactionReturn = sequelize.define('TransactionReturn', {
+//   // Define transaction attributes
+//   trrId: {
+//     type: DataTypes.STRING, // Change data type to STRING
+//     primaryKey: true,
+//     allowNull: false,
+//     unique: true,
+//   },
+//   // Define foreign key for product
+//   prdId: {
+//     type: DataTypes.STRING, // Change data type to STRING
+//     allowNull: false,
+//     references: {
+//       model: Product, // Reference the Product model
+//       key: 'productId', // Reference the primary key of Product
+//     },
+//   },
+//   transactionType: {
+//     type: DataTypes.STRING,
+//     allowNull: false,
+//   },
+//   qty: {
+//     type: DataTypes.INTEGER,
+//     allowNull: false,
+//   },
+//   unit: {
+//     type: DataTypes.STRING,
+//     allowNull: false,
+//   },
+   
+//   date: {
+//     type: DataTypes.DATE,
+//     allowNull: false,
+//   },
+//   branch: {
+//     type: DataTypes.STRING,
+//     allowNull: false,
+//   },
+//   createdBy: {
+//     type: DataTypes.STRING,
+//     allowNull: false,
+//   },
+//   reason: {
+//     type: DataTypes.STRING,
+//     allowNull: false,
+//   }
+// }, {
+//   charset: 'utf8mb4',
+//   collate: 'utf8mb4_unicode_ci',
+// });
+
+// // Before validating and creating a new transaction, generate trrId if not provided
+// TransactionReturn.beforeValidate(async (transaction, options) => {
+//     if (!transaction.trrId) {
+//       // Find the last inserted transaction and get its trrId
+//       const lastTransaction = await TransactionReturn.findOne({
+//         order: [['createdAt', 'DESC']]
+//       });
+  
+//       if (lastTransaction) {
+//         const lastTransactionId = lastTransaction.trrId;
+//         const lastTransactionNumber = parseInt(lastTransactionId.replace('RET', ''), 10);
+//         const nextTransactionNumber = lastTransactionNumber + 1;
+//         transaction.trrId = `RET${nextTransactionNumber.toString().padStart(3, '0')}`;
+//       } else {
+//         // If no transactions exist, start with RET001
+//         transaction.trrId = 'RET001';
+//       }
+//     }
+//   });
+
+// // Define associations between TransactionReturn and Product (optional but recommended)
+// TransactionReturn.belongsTo(Product, { foreignKey: 'prdId' });
+
+// module.exports = TransactionReturn;
+
+
+
+
+
+
+const { DataTypes } = require('sequelize');
+const sequelize = require('../database'); // Import the Sequelize instance
+const Product = require('./Product.js'); // Import the Product model
+const TransactionRelease = require('./TransactionRelease'); // Import the TransactionRelease model
+
+const TransactionReturn = sequelize.define('TransactionReturn', {
+  // Define transaction attributes
+  trrId: {
+    type: DataTypes.STRING, // Change data type to STRING
+    primaryKey: true,
+    allowNull: false,
+    unique: true,
+  },
+  // Define foreign key for product
+  prdId: {
+    type: DataTypes.STRING, // Change data type to STRING
+    allowNull: false,
+    references: {
+      model: Product, // Reference the Product model
+      key: 'productId', // Reference the primary key of Product
+    },
+  },
+  transactionType: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  qty: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  unit: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  date: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+  branch: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  createdBy: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  reason: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  // Define foreign key for TransactionRelease
+  transactionReleaseId: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    references: {
+      model: TransactionRelease, // Reference the TransactionRelease model
+      key: 't_id', // Reference the primary key of TransactionRelease
+    },
+  },
+}, {
+  charset: 'utf8mb4',
+  collate: 'utf8mb4_unicode_ci',
+});
+
+// Before validating and creating a new transaction, generate trrId if not provided
+TransactionReturn.beforeValidate(async (transaction, options) => {
+  if (!transaction.trrId) {
+    // Find the last inserted transaction and get its trrId
+    const lastTransaction = await TransactionReturn.findOne({
+      order: [['createdAt', 'DESC']]
+    });
+
+    if (lastTransaction) {
+      const lastTransactionId = lastTransaction.trrId;
+      const lastTransactionNumber = parseInt(lastTransactionId.replace('RET', ''), 10);
+      const nextTransactionNumber = lastTransactionNumber + 1;
+      transaction.trrId = `RET${nextTransactionNumber.toString().padStart(3, '0')}`;
+    } else {
+      // If no transactions exist, start with RET001
+      transaction.trrId = 'RET001';
+    }
+  }
+});
+
+// Define associations between TransactionReturn and Product (optional but recommended)
+TransactionReturn.belongsTo(Product, { foreignKey: 'prdId' });
+TransactionReturn.belongsTo(TransactionRelease, { foreignKey: 'transactionReleaseId' });
+
+module.exports = TransactionReturn;

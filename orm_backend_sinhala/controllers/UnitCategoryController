@@ -1,0 +1,77 @@
+const UnitCategory = require('../model/UnitCategory');
+const sequelize = require('../database');
+
+class UnitCategoryController {
+  async createUnitCategory(req, res) {
+    try {
+      const { cat_id, u_id } = req.body;
+      const newUnitCategory = await UnitCategory.create({ cat_id, u_id });
+      res.status(200).json({
+        success: true,
+        message: 'UnitCategory created successfully',
+        unitCategory: newUnitCategory
+      });
+    } catch (error) {
+      console.error('Error creating UnitCategory:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  async getUnitCategories(req, res) {
+    try {
+      const unitCategories = await UnitCategory.findAll();
+      res.status(200).json({
+        success: true,
+        message: 'UnitCategories retrieved successfully',
+        unitCategories: unitCategories
+      });
+    } catch (error) {
+      console.error('Error retrieving UnitCategories:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+
+  //======get units for given cat id and then get the uIds and unit names
+  
+  async getUnitCategoriesByCatId(req, res) {
+    try {
+      const { cat_id } = req.query; // Assuming cat_id is passed as a query parameter
+
+      // Custom SQL query to fetch units associated with the given category ID
+      const query = `
+        SELECT u.u_id, u.u_name
+        FROM Units u
+        JOIN UnitCategories uc ON u.u_id = uc.u_id
+        WHERE uc.cat_id = :cat_id
+      `;
+
+      const units = await sequelize.query(query, {
+        replacements: { cat_id },
+        type: sequelize.QueryTypes.SELECT
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'Units retrieved successfully for the given category ID',
+        units: units
+      });
+    } catch (error) {
+      console.error('Error retrieving units:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+
+}
+
+module.exports = new UnitCategoryController();

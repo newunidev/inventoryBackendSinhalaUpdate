@@ -1,0 +1,86 @@
+const { DataTypes } = require('sequelize');
+const sequelize = require('../database'); // Import the Sequelize instance
+const Product = require('./Product'); // Import the Product model
+
+const Stock = sequelize.define('Stock', {
+  // Define stock attributes
+  stock_id: {
+    type: DataTypes.STRING,
+    primaryKey: true,
+    allowNull: false,
+    unique: true,
+  },
+  prd_id: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    references: {
+      model: Product, // Reference the Product model
+      key: 'productId',
+       // Reference the primary key of Product
+    },
+    unique: 'compositeIndex' // Define a unique constraint for prd_id and branch
+  },
+  current_qty: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  unit: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  branch: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: 'compositeIndex' // Define a unique constraint for prd_id and branch
+  },
+  date: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+}, {
+  charset: 'utf8mb4',
+  collate: 'utf8mb4_unicode_ci',
+});
+
+// Before validating and creating a new stock, generate stock_id if not provided
+// Stock.beforeValidate(async (stock, options) => {
+//   if (!stock.stock_id) {
+//     const count = await Stock.count(); // Count existing stocks
+//     const nextStockId = `STC${(count + 1).toString().padStart(3, '0')}`; // Generate next stock_id
+//     stock.stock_id = nextStockId;
+//   }
+// });
+
+//=======Stock Primary kye change=======//
+Stock.beforeValidate(async (stock, options) => {
+  if (!stock.stock_id) {
+    try {
+      // Find the most recent stock entry to determine the next stock_id
+      const lastStock = await Stock.findOne({
+        order: [['createdAt', 'DESC']], // Find the latest entry
+      });
+
+      let nextStockId = 'STC001'; // Default starting stock_id if no records exist
+
+      if (lastStock) {
+        // Extract the numeric part of the last stock_id and increment
+        const lastStockId = lastStock.stock_id;
+        const numericPart = parseInt(lastStockId.replace('STC', ''), 10);
+        nextStockId = `STC${(numericPart + 1).toString().padStart(3, '0')}`;
+      }
+
+      // Assign the generated stock_id to the current stock object
+      stock.stock_id = nextStockId;
+    } catch (error) {
+      console.error('Error generating stock_id:', error);
+      throw new Error('Failed to generate unique stock_id');
+    }
+  }
+});
+
+
+
+// Define association between Stock and Product
+Stock.belongsTo(Product, { foreignKey: 'prd_id' });
+
+module.exports = Stock;

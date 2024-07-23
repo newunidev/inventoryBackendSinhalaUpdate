@@ -1,0 +1,146 @@
+// const { DataTypes } = require('sequelize');
+// const sequelize = require('../database'); // Import the Sequelize instance
+// const Stock = require('./Stock'); // Import the Stock model
+
+// const StockTransaction = sequelize.define('StockTransaction', {
+//   // Define stock transaction attributes
+//   SRCID: {
+//     type: DataTypes.STRING,
+//     primaryKey: true,
+//     allowNull: false,
+//     unique: true,
+//   },
+//   StockId: {
+//     type: DataTypes.STRING,
+//     allowNull: false,
+//     references: {
+//       model: Stock, // Reference the Stock model
+//       key: 'stock_id', // Reference the primary key of Stock
+//     },
+//   },
+//   PreviousQty: {
+//     type: DataTypes.INTEGER,
+//     allowNull: false,
+//   },
+//   PurchaseQty: {
+//     type: DataTypes.INTEGER,
+//     allowNull: true, // This field can be null if it's a release transaction
+//   },
+//   ReleaseQty: {
+//     type: DataTypes.INTEGER,
+//     allowNull: true, // This field can be null if it's a purchase transaction
+//   },
+//   Unit: {
+//     type: DataTypes.STRING,
+//     allowNull: false,
+//   },
+//   TransType: {
+//     type: DataTypes.STRING,
+//     allowNull: false,
+//   },
+//   Date: {
+//     type: DataTypes.DATE,
+//     allowNull: false,
+//   },
+//   Branch: {
+//     type: DataTypes.STRING,
+//     allowNull: false,
+//   },
+// }, {
+//   charset: 'utf8mb4',
+//   collate: 'utf8mb4_unicode_ci',
+// });
+
+// // Before validating and creating a new stock transaction, generate SRCID if not provided
+// StockTransaction.beforeValidate(async (stockTransaction, options) => {
+//   if (!stockTransaction.SRCID) {
+//     const transaction = await sequelize.transaction(); // Start a new transaction
+
+//     try {
+//       const lastStockTransaction = await StockTransaction.findOne({
+//         order: [['createdAt', 'DESC']],
+//         transaction, // Ensure the query is part of the transaction
+//       });
+
+//       let nextSRCID = 'SRC001';
+//       if (lastStockTransaction) {
+//         const lastSRCID = lastStockTransaction.SRCID;
+//         const numericPart = parseInt(lastSRCID.replace('SRC', ''), 10);
+//         nextSRCID = `SRC${(numericPart + 1).toString().padStart(3, '0')}`;
+//       }
+
+//       stockTransaction.SRCID = nextSRCID;
+
+//       await transaction.commit(); // Commit the transaction
+//     } catch (error) {
+//       await transaction.rollback(); // Rollback the transaction in case of error
+//       console.error('Error generating SRCID:', error);
+//       throw new Error('Failed to generate unique SRCID');
+//     }
+//   }
+// });
+
+// // Define association between StockTransaction and Stock
+// StockTransaction.belongsTo(Stock, { foreignKey: 'StockId' });
+
+// module.exports = StockTransaction;
+
+
+const { DataTypes } = require('sequelize');
+const { v4: uuidv4 } = require('uuid'); // Import UUID library
+const sequelize = require('../database'); // Import the Sequelize instance
+const Stock = require('./Stock'); // Import the Stock model
+
+const StockTransaction = sequelize.define('StockTransaction', {
+  SRCID: {
+    type: DataTypes.STRING,
+    primaryKey: true,
+    allowNull: false,
+    unique: true,
+    defaultValue: () => uuidv4(), // Use UUID for default value
+  },
+  StockId: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    references: {
+      model: Stock,
+      key: 'stock_id',
+    },
+  },
+  PreviousQty: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  PurchaseQty: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+  ReleaseQty: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+  Unit: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  TransType: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  Date: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+  Branch: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+}, {
+  charset: 'utf8mb4',
+  collate: 'utf8mb4_unicode_ci',
+});
+
+// Define association between StockTransaction and Stock
+StockTransaction.belongsTo(Stock, { foreignKey: 'StockId' });
+
+module.exports = StockTransaction;

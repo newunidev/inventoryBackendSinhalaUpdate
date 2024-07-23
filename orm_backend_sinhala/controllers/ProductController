@@ -1,0 +1,114 @@
+const Product = require('../model/Product');
+const Category = require('../model/Category');
+const Supplier = require('../model/Supplier');
+
+class ProductController {
+  async createProduct(req, res) {
+    try {
+      const { productName, productDescription, categoryId  } = req.body;
+
+      // Ensure category and supplier exist before creating product
+      const [category] = await Promise.all([
+        Category.findByPk(categoryId),
+        
+      ]);
+
+      if (!category ) {
+        return res.status(400).json({
+          success: false,
+          message: 'Category   not found'
+        });
+      }
+
+      const newProduct = await Product.create({
+        productName,
+        productDescription,
+        categoryId,
+        
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'Product created successfully',
+        product: newProduct,
+      });
+    } catch (error) {
+      if (error.message === 'Product with the same name and category already exists.') {
+        res.status(400).json({
+          success: false,
+          message: error.message,
+        });
+      } else {
+        console.error('Error creating product:', error);
+        res.status(500).json({
+          success: false,
+          message: 'Internal server error',
+        });
+      }
+    }
+  }
+
+  async getProducts(req, res) {
+    try {
+      // Option 1: Fetch products without including category and supplier details
+       const products = await Product.findAll();
+
+      // Option 2: Fetch products with associated category and supplier (eager loading)
+    //   const products = await Product.findAll({
+    //     include: [
+    //       {
+    //         model: Category,
+    //         as: 'categories', // Optional alias for the association
+    //       },
+           
+    //     ],
+    //   });
+
+      res.status(200).json({
+        success: true,
+        message: 'Products Retrieved successfully',
+        products: products,
+      });
+    } catch (error) {
+      console.error('Error retrieving Products:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  //method for get product by cat Id
+  async getProductsByCategoryId(req, res) {
+    try {
+      const { catId } = req.query;
+
+      const products = await Product.findAll({
+        where: {
+          categoryId: catId,
+        },
+        include: [
+          {
+            model: Category,
+            attributes: ['catId', 'catName'], // Specify attributes to include from Category model
+          },
+        ],
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'Products Retrieved successfully',
+        products: products,
+      });
+    } catch (error) {
+      console.error('Error retrieving Products:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+      });
+    }
+  }
+
+}
+
+module.exports = new ProductController();

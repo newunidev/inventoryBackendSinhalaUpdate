@@ -1,0 +1,63 @@
+const { DataTypes } = require('sequelize');
+const sequelize = require('../database'); // Import the Sequelize instance
+const Product = require('./Product.js'); // Import the Product model
+
+const TransactionRelease = sequelize.define('TransactionRelease', {
+  // Define transaction attributes
+  t_id: {
+    type: DataTypes.STRING,
+    primaryKey: true,
+    allowNull: false,
+    unique: true,
+  },
+  pr_id: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    references: {
+      model: Product, // Reference the Product model
+      key: 'productId', // Reference the primary key of Product
+    },
+  },
+  tr_type: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  qty: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  unit: {
+    type: DataTypes.STRING,
+    allowNull:false,
+  },
+   
+  date: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+  branch: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  createdBy:{
+    type: DataTypes.STRING,
+    allowNull:false,
+  }
+}, {
+  charset: 'utf8mb4',
+  collate: 'utf8mb4_unicode_ci',
+});
+
+// Before validating and creating a new transaction, generate t_id if not provided
+TransactionRelease.beforeValidate(async (transaction, options) => {
+  if (!transaction.t_id) {
+    const count = await TransactionRelease.count(); // Count existing transactions
+    const nextTransactionId = `TRSR${(count + 1).toString().padStart(3, '0')}`; // Generate next t_id
+    transaction.t_id = nextTransactionId;
+  }
+});
+
+// Define association between TransactionRelease and Product (optional but recommended)
+TransactionRelease.belongsTo(Product, { foreignKey: 'pr_id' });
+
+module.exports = TransactionRelease;

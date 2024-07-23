@@ -1,0 +1,45 @@
+const { DataTypes } = require('sequelize');
+const sequelize = require('../database'); // Adjust the path as necessary
+const Category = require('./Category'); // Adjust the path as necessary
+const Unit = require('./Unit'); // Adjust the path as necessary
+
+const UnitCategory = sequelize.define('UnitCategory', {
+  uc_id: {
+    type: DataTypes.STRING,
+    primaryKey: true,
+    allowNull: false,
+    unique: true,
+  },
+  cat_id: {
+    type: DataTypes.STRING,
+    references: {
+      model: Category,
+      key: 'catId'
+    },
+    primaryKey: true,
+    allowNull: false,
+  },
+  u_id: {
+    type: DataTypes.STRING,
+    references: {
+      model: Unit,
+      key: 'u_id'
+    },
+    primaryKey: true,
+    allowNull: false,
+  }
+}, {
+  charset: 'utf8mb4',
+  collate: 'utf8mb4_unicode_ci',
+});
+
+// Before validating and creating a new unit category, modify the ID to include the prefix 'UC'
+UnitCategory.beforeValidate(async (unitCategory, options) => {
+  if (!unitCategory.uc_id) {
+    const count = await UnitCategory.count();
+    const nextUnitCategoryId = `UC${(count + 1).toString().padStart(3, '0')}`;
+    unitCategory.uc_id = nextUnitCategoryId;
+  }
+});
+
+module.exports = UnitCategory;
